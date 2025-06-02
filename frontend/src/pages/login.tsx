@@ -1,7 +1,7 @@
 import type React from "react";
 
-import { useState } from "react";
-import { Link } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +15,11 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const { data: session, isPending } = useSession();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -26,6 +28,13 @@ export default function LoginPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (session && !isPending) {
+      navigate("/", { replace: true });
+    }
+  }, [session, isPending, navigate]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -53,7 +62,7 @@ export default function LoginPage() {
         await authClient.signIn.email({
           email: formData.email,
           password: formData.password,
-          callbackURL: "/dashboard",
+          callbackURL: "/",
         });
         console.log("Login submitted:", formData);
         // Simulate API call

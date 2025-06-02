@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { authClient } from "../lib/auth-client";
+import { useState, useEffect } from "react";
+import { authClient, useSession } from "../lib/auth-client";
 import { Link } from "react-router";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function SignupPage() {
+  const navigate = useNavigate();
+  const { data: session, isPending } = useSession();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,7 +31,12 @@ export default function SignupPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const navigate = useNavigate();
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (session && !isPending) {
+      navigate("/", { replace: true });
+    }
+  }, [session, isPending, navigate]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -77,7 +84,7 @@ export default function SignupPage() {
           email: formData.email,
           name: formData.firstName + " " + formData.lastName,
           password: formData.password,
-          callbackURL: "/dashboard",
+          callbackURL: "/",
         },
         {
           onRequest: () => {
@@ -85,7 +92,7 @@ export default function SignupPage() {
           },
           onSuccess: () => {
             //redirect to the dashboard or sign in page
-            navigate("/dashboard");
+            navigate("/");
           },
           onError: (ctx) => {
             // display the error message
